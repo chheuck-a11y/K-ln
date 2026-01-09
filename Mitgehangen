@@ -1,0 +1,550 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  BookOpen, 
+  Heart, 
+  Shield, 
+  Brain, 
+  Users, 
+  Anchor, 
+  Save, 
+  ArrowRight, 
+  ArrowLeft,
+  AlertTriangle,
+  Battery,
+  Wind,
+  Home,
+  MessageSquare,
+  Info,
+  Lock
+} from 'lucide-react';
+
+// --- Komponenten ---
+
+const Card = ({ children, className = "" }) => (
+  <div className={`bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden ${className}`}>
+    {children}
+  </div>
+);
+
+const Button = ({ children, onClick, variant = "primary", className = "", icon: Icon }) => {
+  const baseStyle = "px-4 py-2 rounded-lg font-medium transition-all flex items-center justify-center gap-2";
+  const variants = {
+    primary: "bg-teal-600 text-white hover:bg-teal-700 shadow-md hover:shadow-lg",
+    secondary: "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300",
+    danger: "bg-rose-100 text-rose-700 hover:bg-rose-200 border border-rose-200",
+    outline: "border-2 border-teal-600 text-teal-600 hover:bg-teal-50"
+  };
+  
+  return (
+    <button onClick={onClick} className={`${baseStyle} ${variants[variant]} ${className}`}>
+      {Icon && <Icon size={18} />}
+      {children}
+    </button>
+  );
+};
+
+const ProgressBar = ({ current, total }) => (
+  <div className="w-full bg-slate-100 rounded-full h-2.5 mb-6">
+    <div 
+      className="bg-teal-600 h-2.5 rounded-full transition-all duration-500 ease-out" 
+      style={{ width: `${(current / total) * 100}%` }}
+    ></div>
+  </div>
+);
+
+// --- Content Data ---
+
+const modules = [
+  {
+    id: 1,
+    title: "Woche 1: Ankommen & Verstehen",
+    icon: Users,
+    color: "bg-blue-50 text-blue-700",
+    summary: "Sucht ist keine Charakterschwäche, sondern ein chronischer Stressor für das gesamte System. Verstehen Sie die Dynamik.",
+    content: [
+      {
+        headline: "Sie sind nicht allein",
+        text: "In Deutschland leben etwa 7-10 Millionen Menschen als Angehörige von Suchtkranken. Die Belastung, die Sie spüren, ist keine Einbildung, sondern wissenschaftlich belegt (SSCS-Modell). Angehörige leiden oft unter denselben Stresssymptomen wie der Erkrankte selbst: Schlafstörungen, Angst und körperliche Erschöpfung."
+      },
+      {
+        headline: "Sucht als Familienkrankheit",
+        text: "Wenn ein Familienmitglied erkrankt, dreht sich das ganze System nur noch um die Sucht. Oft übernehmen Angehörige unbewusst Aufgaben, um das 'Gleichgewicht' zu halten – sie lügen, vertuschen oder kontrollieren. Das ist keine Schwäche, sondern ein Überlebensmechanismus. Der erste Schritt zur Heilung ist zu erkennen: Ich habe es nicht verursacht, ich kann es nicht kontrollieren, und ich kann es nicht heilen."
+      }
+    ],
+    exercises: [
+      {
+        id: "1-1",
+        title: "Meine Belastungs-Biografie",
+        prompt: "Wann hatten Sie das erste Mal das Gefühl, dass etwas nicht stimmt? Wie hat sich Ihr Verhalten seitdem verändert, um Konflikte zu vermeiden?",
+        placeholder: "Schreiben Sie hier Ihre Geschichte..."
+      },
+      {
+        id: "1-2",
+        title: "Körper-Protokoll",
+        prompt: "Wo spüren Sie den Stress im Körper? (z.B. Nacken, Magen, Schlafstörungen). Versuchen Sie, jedem Symptom eine Emotion zuzuordnen.",
+        placeholder: "Mein Nacken spannt sich an, wenn..."
+      }
+    ]
+  },
+  {
+    id: 2,
+    title: "Woche 2: Das gekaperte Gehirn",
+    icon: Brain,
+    color: "bg-purple-50 text-purple-700",
+    summary: "Neurobiologie einfach erklärt: Warum der Wille gegen die Dopamin-Flut oft keine Chance hat.",
+    content: [
+      {
+        headline: "Das Belohnungssystem (Der Motor)",
+        text: "Suchtmittel fluten das Gehirn mit Dopamin – viel stärker als Essen oder soziale Nähe es könnten. Mit der Zeitstumpfen die Rezeptoren ab (Toleranz). Der Erkrankte konsumiert irgendwann nicht mehr, um 'high' zu sein, sondern nur noch, um sich überhaupt 'normal' zu fühlen und den Entzugsschmerz zu vermeiden."
+      },
+      {
+        headline: "Der Präfrontale Kortex (Die kaputte Bremse)",
+        text: "Dieser Teil des Gehirns ist für Vernunft, Planung und Impulskontrolle zuständig. Bei Suchtkranken ist die Verbindung zwischen 'Wollen' und 'Tun' physisch gestört. Appelle an die Vernunft ('Denk doch an deine Arbeit!') kommen im Moment des Suchtdrucks (Craving) neurologisch gar nicht an. Es ist keine Böswilligkeit, sondern eine Blockade."
+      }
+    ],
+    exercises: [
+      {
+        id: "2-1",
+        title: "Neuro-Übersetzung",
+        prompt: "Nehmen Sie ein verletzendes Verhalten Ihres Angehörigen (z.B. Lügen, Aggression). Versuchen Sie, es nicht als böse Absicht, sondern als 'Symptom des defekten Gehirns' zu beschreiben.",
+        placeholder: "Wenn er schreit, ist das eigentlich seine überaktive Amygdala..."
+      },
+      {
+        id: "2-2",
+        title: "Trennung von Person & Krankheit",
+        prompt: "Was liebe ich an der gesunden Person? Was hasse ich an der Krankheit?",
+        placeholder: "Ich liebe seinen Humor, aber ich hasse die Unzuverlässigkeit der Sucht..."
+      }
+    ]
+  },
+  {
+    id: 3,
+    title: "Woche 3: Meine Identität",
+    icon: Anchor,
+    color: "bg-amber-50 text-amber-700",
+    summary: "Wer bin ich, wenn ich mich nicht um andere kümmere? Die 5 Säulen der Identität und familiäre Rollenmuster.",
+    content: [
+      {
+        headline: "Rollen im System",
+        text: "Um das instabile System zu stützen, schlüpfen Angehörige oft in Rollen: Der 'Held' versucht durch Leistung alles auszugleichen. Der 'Sündenbock' lenkt durch Ärger von der Sucht ab. Das 'verlorene Kind' macht sich unsichtbar. Welche Maske tragen Sie?"
+      },
+      {
+        headline: "Die 5 Säulen der Identität",
+        text: "Nach Hilarion Petzold ruht unsere psychische Stabilität auf 5 Säulen: Leiblichkeit (Gesundheit), Soziales Netzwerk, Arbeit/Leistung, Materielle Sicherheit und Werte. Sucht greift oft alle Säulen gleichzeitig an. Ziel ist es, diese Säulen UNABHÄNGIG vom Suchtkranken wieder zu stärken."
+      }
+    ],
+    exercises: [
+      {
+        id: "3-1",
+        title: "Säulen-Check",
+        prompt: "Bewerten Sie Ihre 5 Säulen (Körper, Soziales, Arbeit, Materielles, Werte). Welche Säule ist stabil? Welche wackelt?",
+        placeholder: "Meine Arbeit läuft gut, aber meine sozialen Kontakte habe ich vernachlässigt..."
+      }
+    ]
+  },
+  {
+    id: 4,
+    title: "Woche 4: Kommunikation",
+    icon: MessageSquare,
+    color: "bg-green-50 text-green-700",
+    summary: "Raus aus dem Drama-Dreieck. Wie Sie Grenzen setzen, ohne Mauern zu bauen.",
+    content: [
+      {
+        headline: "Das Drama-Dreieck verlassen",
+        text: "Oft rotieren wir zwischen den Rollen: Retter ('Ich mach das schon'), Verfolger ('Du hast schon wieder!') und Opfer ('Immer ich'). Der Ausweg ist der 'Erwachsenen-Modus': Sachliche Beobachtung statt Vorwurf. Klare Ich-Botschaften statt Du-Angriffe."
+      },
+      {
+        headline: "Der Pausenknopf",
+        text: "Diskutieren Sie niemals mit einem berauschten Gehirn. Wenn Sie merken, dass Wut aufsteigt (Herzklopfen, Zittern), drücken Sie den Pausenknopf. Verlassen Sie die Situation. Das ist keine Flucht, sondern aktiver Selbstschutz und Deeskalation."
+      }
+    ],
+    exercises: [
+      {
+        id: "4-1",
+        title: "Dialog-Training",
+        prompt: "Schreiben Sie einen typischen Vorwurf auf ('Du machst immer...'). Formulieren Sie ihn in eine Ich-Botschaft um ('Ich fühle mich..., wenn...').",
+        placeholder: "Statt 'Du Lügner' sage ich: 'Ich bin verletzt, wenn Abmachungen nicht eingehalten werden'..."
+      },
+      {
+        id: "4-2",
+        title: "Mein Pausen-Satz",
+        prompt: "Welchen Satz werden Sie sagen, um aus einer Eskalation auszusteigen?",
+        placeholder: "Ich merke, ich werde wütend. Ich gehe jetzt 30 Minuten spazieren."
+      }
+    ]
+  },
+  {
+    id: 5,
+    title: "Woche 5: Ressourcen & Kraft",
+    icon: Battery,
+    color: "bg-rose-50 text-rose-700",
+    summary: "Hilfe durch Nicht-Hilfe: Warum 'Gut gemeint' oft das Gegenteil von 'Gut gemacht' ist.",
+    content: [
+      {
+        headline: "Enabling vs. Empowerment",
+        text: "'Enabling' (Ermöglichen) bedeutet, die negativen Konsequenzen der Sucht abzufedern (Lügen beim Chef, Schulden zahlen). Das verlängert die Sucht, weil der Leidensdruck fehlt. Wahre Hilfe bedeutet, dem anderen die Verantwortung für sein Handeln zurückzugeben – auch wenn das schmerzhaft ist."
+      },
+      {
+        headline: "Die Sauerstoffmaske",
+        text: "Wie im Flugzeug gilt: Erst die eigene Maske aufsetzen, dann anderen helfen. Wenn Sie ausgebrannt sind, nutzen Sie niemandem. Selbstfürsorge ist kein Egoismus, sondern die Voraussetzung für Ihre Handlungsfähigkeit."
+      }
+    ],
+    exercises: [
+      {
+        id: "5-1",
+        title: "Inseln im Stressmeer",
+        prompt: "Was sind 3 Dinge, die Sie NUR für sich tun? (Ohne den Partner/Angehörigen).",
+        placeholder: "1. Kaffeetrinken mit Sabine. 2. Schwimmen gehen. 3. ..."
+      },
+      {
+        id: "5-2",
+        title: "Energiefresser-Liste",
+        prompt: "Was tun Sie aktuell noch, das Sie eigentlich Kraft kostet und nichts bringt? (z.B. Kontrollieren).",
+        placeholder: "Ich kontrolliere heimlich die Kontoauszüge..."
+      }
+    ]
+  },
+  {
+    id: 6,
+    title: "Woche 6: Zukunft & Notfallplan",
+    icon: Shield,
+    color: "bg-cyan-50 text-cyan-700",
+    summary: "Genesung ist ein Marathon. Wie Sie langfristig stabil bleiben und Rückfälle als Teil des Weges begreifen.",
+    content: [
+      {
+        headline: "Der Weg der Genesung",
+        text: "Abstinenz ist nur der erste Schritt. Das Gehirn braucht Monate bis Jahre zur Erholung (Post-Akutes Entzugssyndrom). Seien Sie geduldig. Rückschläge gehören dazu und sind oft wichtige Lernfelder ('Lernrückfall')."
+      },
+      {
+        headline: "Ihr eigener Plan",
+        text: "Machen Sie Ihr Lebensglück nicht zu 100% vom Nüchternheitsstatus Ihres Angehörigen abhängig. Bauen Sie sich ein Sicherheitsnetz aus Freunden, Hobbys und professioneller Hilfe, das Sie trägt – egal was passiert."
+      }
+    ],
+    exercises: [
+      {
+        id: "6-1",
+        title: "Brief an mein Zukunfts-Ich",
+        prompt: "Wie sieht Ihr Leben in einem Jahr aus, wenn Sie Ihre Autonomie zurückgewonnen haben? (Unabhängig davon, ob der andere noch konsumiert).",
+        placeholder: "Liebes Zukunfts-Ich, heute bin ich..."
+      },
+      {
+        id: "6-2",
+        title: "Krisenplan",
+        prompt: "Wen rufe ich an, wenn es eskaliert? Wo ist mein sicherer Ort?",
+        placeholder: "Notfallkontakt: Mama. Sicherer Ort: Hotel zur Post..."
+      }
+    ]
+  }
+];
+
+// --- Main App Component ---
+
+export default function GroupCompanionApp() {
+  const [activeTab, setActiveTab] = useState('dashboard'); // dashboard, module, emergency
+  const [currentModuleId, setCurrentModuleId] = useState(1);
+  const [entries, setEntries] = useState({});
+  const [showSaveNotification, setShowSaveNotification] = useState(false);
+
+  // Load data from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('sucht_tagebuch_entries');
+    if (saved) {
+      setEntries(JSON.parse(saved));
+    }
+  }, []);
+
+  // Save entry
+  const handleEntryChange = (exerciseId, text) => {
+    const newEntries = { ...entries, [exerciseId]: text };
+    setEntries(newEntries);
+    localStorage.setItem('sucht_tagebuch_entries', JSON.stringify(newEntries));
+  };
+
+  const handleSave = () => {
+    setShowSaveNotification(true);
+    setTimeout(() => setShowSaveNotification(false), 2000);
+  };
+
+  const currentModule = modules.find(m => m.id === currentModuleId);
+
+  // --- Views ---
+
+  const DashboardView = () => (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <header className="mb-6">
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">Willkommen zurück.</h1>
+        <p className="text-slate-600">Dies ist Ihr sicherer Raum für Reflexion und Wachstum.</p>
+      </header>
+
+      {/* NEW PRIVACY BANNER */}
+      <div className="bg-sky-50 border border-sky-100 rounded-xl p-5 mb-8 flex items-start gap-4 shadow-sm">
+        <div className="bg-white p-2 rounded-full text-sky-600 shadow-sm shrink-0">
+           <Lock size={24} />
+        </div>
+        <div>
+          <h3 className="font-bold text-sky-900 text-lg">Ihre Daten gehören nur Ihnen.</h3>
+          <p className="text-sky-800 mt-1 leading-relaxed text-sm">
+            Wir nehmen Datenschutz ernst: <strong>Diese App funktioniert komplett offline.</strong> 
+            Es werden keine Eingaben an einen Server gesendet. Alles, was Sie schreiben, bleibt 
+            verschlüsselt im Speicher dieses Smartphones.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <div 
+          onClick={() => setActiveTab('emergency')}
+          className="cursor-pointer bg-rose-50 border border-rose-100 p-6 rounded-xl hover:shadow-md transition-all flex items-center gap-4 group"
+        >
+          <div className="bg-white p-3 rounded-full shadow-sm group-hover:scale-110 transition-transform text-rose-600">
+            <AlertTriangle size={24} />
+          </div>
+          <div>
+            <h3 className="font-bold text-rose-900">Notfallkoffer</h3>
+            <p className="text-sm text-rose-700">Schnelle Hilfe bei Eskalation</p>
+          </div>
+        </div>
+        
+        <div className="bg-teal-50 border border-teal-100 p-6 rounded-xl flex items-center gap-4">
+          <div className="bg-white p-3 rounded-full shadow-sm text-teal-600">
+            <BookOpen size={24} />
+          </div>
+          <div>
+            <h3 className="font-bold text-teal-900">Fortschritt</h3>
+            <p className="text-sm text-teal-700">{Object.keys(entries).length} Einträge verfasst</p>
+          </div>
+        </div>
+      </div>
+
+      <h2 className="text-xl font-bold text-slate-800 mb-4">Ihre Kurs-Module</h2>
+      <div className="grid gap-4">
+        {modules.map((module) => (
+          <Card key={module.id} className="group cursor-pointer hover:border-teal-500 transition-colors">
+            <div 
+              className="p-5 flex items-center justify-between"
+              onClick={() => {
+                setCurrentModuleId(module.id);
+                setActiveTab('module');
+              }}
+            >
+              <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-lg ${module.color}`}>
+                  <module.icon size={24} />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-900 group-hover:text-teal-700 transition-colors">
+                    {module.title}
+                  </h3>
+                  <p className="text-sm text-slate-500 line-clamp-1">{module.summary}</p>
+                </div>
+              </div>
+              <ArrowRight size={20} className="text-slate-300 group-hover:text-teal-600" />
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+
+  const ModuleView = () => (
+    <div className="animate-in slide-in-from-right duration-300">
+      <div className="flex items-center gap-2 mb-6 text-slate-500 cursor-pointer hover:text-teal-600" onClick={() => setActiveTab('dashboard')}>
+        <ArrowLeft size={18} /> Zurück zur Übersicht
+      </div>
+
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-slate-900">{currentModule.title}</h2>
+        <span className="text-sm bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-medium">
+          Woche {currentModule.id} von 6
+        </span>
+      </div>
+
+      {/* Expanded Theory Section */}
+      <div className="space-y-4 mb-8">
+        {currentModule.content.map((section, idx) => (
+          <Card key={idx} className="bg-gradient-to-br from-slate-50 to-white border-slate-200">
+            <div className="p-6">
+              <div className="flex items-start gap-4">
+                {idx === 0 && (
+                  <div className={`p-3 rounded-lg bg-white shadow-sm text-teal-700 shrink-0`}>
+                    <Brain size={24} />
+                  </div>
+                )}
+                <div className={idx === 0 ? "" : "ml-14"}>
+                  <h3 className="font-bold text-slate-900 mb-2 text-lg">{section.headline}</h3>
+                  <p className="text-slate-700 leading-relaxed">
+                    {section.text}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      <div className="space-y-8">
+        {currentModule.exercises.map((ex) => (
+          <div key={ex.id} className="space-y-3">
+            <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+              <span className="bg-teal-100 text-teal-800 text-xs px-2 py-0.5 rounded uppercase tracking-wider">Übung</span>
+              {ex.title}
+            </h3>
+            <p className="text-slate-600 italic">{ex.prompt}</p>
+            <textarea
+              className="w-full h-40 p-4 rounded-xl border border-slate-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition-all resize-none text-slate-700 bg-white"
+              placeholder={ex.placeholder}
+              value={entries[ex.id] || ''}
+              onChange={(e) => handleEntryChange(ex.id, e.target.value)}
+            />
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-8 flex justify-between items-center sticky bottom-6 bg-white/80 backdrop-blur p-4 rounded-xl border border-slate-200 shadow-lg">
+        <span className="text-sm text-slate-500">
+          {showSaveNotification ? "Gespeichert!" : "Automatisches Speichern aktiv"}
+        </span>
+        <div className="flex gap-3">
+          <Button 
+            variant="secondary" 
+            onClick={() => setCurrentModuleId(prev => Math.max(1, prev - 1))}
+            className={currentModuleId === 1 ? 'invisible' : ''}
+          >
+            Vorherige
+          </Button>
+          <Button 
+            variant="primary" 
+            onClick={() => {
+              handleSave();
+              if (currentModuleId < 6) {
+                setCurrentModuleId(prev => prev + 1);
+                window.scrollTo(0,0);
+              } else {
+                setActiveTab('dashboard');
+              }
+            }}
+            icon={currentModuleId === 6 ? Save : ArrowRight}
+          >
+            {currentModuleId === 6 ? "Fertigstellen" : "Nächste Woche"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const EmergencyView = () => (
+    <div className="animate-in zoom-in duration-300 max-w-lg mx-auto">
+      <div className="flex items-center gap-2 mb-6 text-slate-500 cursor-pointer hover:text-teal-600" onClick={() => setActiveTab('dashboard')}>
+        <ArrowLeft size={18} /> Zurück
+      </div>
+      
+      <div className="text-center mb-8">
+        <div className="inline-flex p-4 bg-rose-100 text-rose-600 rounded-full mb-4">
+          <AlertTriangle size={48} />
+        </div>
+        <h1 className="text-3xl font-bold text-slate-900">Notfallkoffer</h1>
+        <p className="text-slate-600 mt-2">Wenn die Emotionen hochkochen.</p>
+      </div>
+
+      <div className="space-y-4">
+        <Card className="bg-white border-l-4 border-l-teal-500">
+          <div className="p-5">
+            <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+              <Wind size={20} className="text-teal-600"/> 
+              Box-Breathing (Sofort-Hilfe)
+            </h3>
+            <div className="flex justify-between text-center text-sm text-slate-600 bg-slate-50 p-3 rounded-lg">
+              <div>Einatmen<br/><strong>4 Sek</strong></div>
+              <div>Halten<br/><strong>4 Sek</strong></div>
+              <div>Ausatmen<br/><strong>4 Sek</strong></div>
+              <div>Halten<br/><strong>4 Sek</strong></div>
+            </div>
+            <p className="mt-3 text-sm text-slate-500">Wiederholen Sie dies 4 Mal, um das Nervensystem zu beruhigen.</p>
+          </div>
+        </Card>
+
+        <Card className="bg-white border-l-4 border-l-orange-500">
+          <div className="p-5">
+            <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+              <Shield size={20} className="text-orange-600"/> 
+              Der Pausen-Satz
+            </h3>
+            <p className="italic text-slate-700 bg-orange-50 p-4 rounded-lg border border-orange-100">
+              "Ich merke, dass ich gerade zu emotional werde, um sachlich zu bleiben. Ich brauche eine Auszeit und verlasse jetzt den Raum."
+            </p>
+          </div>
+        </Card>
+
+        <Card className="bg-white border-l-4 border-l-blue-500">
+          <div className="p-5">
+            <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+              <Home size={20} className="text-blue-600"/> 
+              Sicherer Ort
+            </h3>
+            <div className="text-slate-600 space-y-2">
+              <p>Gehen Sie physisch an einen anderen Ort:</p>
+              <ul className="list-disc list-inside text-sm pl-2">
+                <li>Spazieren gehen (Bewegung baut Adrenalin ab)</li>
+                <li>Ein anderes Zimmer abschließen</li>
+                <li>Einen Freund anrufen</li>
+              </ul>
+            </div>
+          </div>
+        </Card>
+      </div>
+      
+      <div className="mt-8 text-center">
+        <p className="text-xs text-slate-400">Notrufnummern: <br/>Telefonseelsorge: 0800 111 0 111 <br/>Polizei: 110</p>
+      </div>
+    </div>
+  );
+
+  const Footer = () => (
+    <footer className="mt-12 py-8 border-t border-slate-200 text-center text-sm text-slate-500 bg-slate-100">
+      <div className="max-w-xl mx-auto px-4 flex flex-col items-center gap-3">
+        <div className="flex items-center gap-2 text-slate-600 font-semibold">
+          <Lock size={16} />
+          <span>Sicherheit & Privatsphäre</span>
+        </div>
+        <p className="text-xs leading-relaxed text-slate-500">
+          Diese Anwendung speichert alle Daten ausschließlich im lokalen Speicher Ihres Browsers ("LocalStorage"). 
+          Es erfolgt <strong>keine Übertragung</strong> an Server, Datenbanken oder Drittanbieter. 
+          Sobald Sie Ihre Browserdaten löschen, werden auch die Einträge dieser App unwiderruflich gelöscht.
+        </p>
+        <div className="flex gap-4 mt-2 text-xs">
+           {/* Replace '#' with actual links to Diakonie's legal pages */}
+          <a href="#" className="hover:text-teal-600 underline">Impressum</a>
+          <a href="#" className="hover:text-teal-600 underline">Datenschutzerklärung</a>
+        </div>
+      </div>
+    </footer>
+  );
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-teal-100 flex flex-col">
+      <nav className="bg-white border-b border-slate-200 sticky top-0 z-10">
+        <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2 font-bold text-teal-800 text-lg cursor-pointer" onClick={() => setActiveTab('dashboard')}>
+            <Heart className="text-teal-600" fill="currentColor" size={20} />
+            <span>Mitgefangen-Tagebuch</span>
+          </div>
+          {activeTab === 'module' && (
+            <div className="hidden md:block w-1/3">
+               <ProgressBar current={currentModuleId} total={6} />
+            </div>
+          )}
+        </div>
+      </nav>
+
+      <main className="max-w-3xl mx-auto px-4 py-8 flex-grow w-full">
+        {activeTab === 'dashboard' && <DashboardView />}
+        {activeTab === 'module' && <ModuleView />}
+        {activeTab === 'emergency' && <EmergencyView />}
+      </main>
+
+      <Footer />
+    </div>
+  );
+}
+
+
